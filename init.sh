@@ -51,6 +51,15 @@ if [ -n "$DIRECT_GW" ]; then
     log "Main route: default via $DIRECT_GW dev $IFACE"
 fi
 
+HOST_IP="${HOST_IP:-}"
+if [ -n "$HOST_IP" ]; then
+    GATEWAY_IP=$(ip route show default dev "$IFACE" | awk '/default/ {print $3; exit}')
+    if [ -n "$GATEWAY_IP" ]; then
+        ip route add "$HOST_IP/32" via "$GATEWAY_IP" dev "$IFACE"
+        log "Workaround: host $HOST_IP routed via gateway $GATEWAY_IP (macvlan isolation)"
+    fi
+fi
+
 # ========== iptables ==========
 iptables -t mangle -A PREROUTING -i tailscale0 -j MARK --set-mark 0x1
 log "iptables: marked tailscale0 ingress with fwmark 0x1"
