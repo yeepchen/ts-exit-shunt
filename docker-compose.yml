@@ -31,7 +31,6 @@ services:
       - TS_STATE_DIR=${TS_STATE_DIR:-/var/lib/tailscale}
       - TS_USERSPACE=${TS_USERSPACE:-false}
       - TS_EXTRA_ARGS=${TS_EXTRA_ARGS:---advertise-exit-node --netfilter-mode=off --accept-dns=false}
-      - HOST_IP=${HOST_IP:-192.168.1.230}
         
 
 networks:
