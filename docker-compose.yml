@@ -14,7 +14,7 @@ services:
       - net.ipv6.conf.all.forwarding=1
 
     networks:
-      ipvlan-net:
+      tsnetwork:
         ipv4_address: ${IPVLAN_IP:-192.168.1.100}
 
     volumes:
@@ -34,7 +34,7 @@ services:
         
 
 networks:
-  ipvlan-net:
+  tsnetwork:
     driver: ipvlan
     driver_opts:
       parent: ${PARENT_IFACE:-eth0}   # 宿主机的物理网卡，必须正确
