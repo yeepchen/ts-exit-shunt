@@ -40,3 +40,7 @@ networks:
       config:
         - subnet: ${SUBNET:-192.168.1.0/24}
           gateway: ${GATEWAY:-192.168.1.1}
+
+volumes:
+  tailscale-state:
+    driver: local
