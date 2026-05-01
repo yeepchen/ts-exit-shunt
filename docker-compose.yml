@@ -2,7 +2,7 @@ services:
   tailscale-exit:
     build: .
     container_name: tailscale-exit
-    hostname: exit-node
+    hostname: ${TS_HOSTNAME:-exit-node}
     restart: unless-stopped
 
     cap_add:
@@ -12,8 +12,6 @@ services:
       - net.ipv4.ip_forward=1
       - net.ipv6.conf.all.forwarding=1
 
-    # Host networking is required so the container can manipulate the host's
-    # multi-gateway routing tables directly.
     network_mode: host
 
     volumes:
@@ -21,17 +19,26 @@ services:
       - tailscale-state:/var/lib/tailscale
 
     environment:
-      # === Custom Split-Gateway Config ===
-      - DIRECT_GW=192.168.1.1        # tailscaled own traffic (STUN/Control/DERP)
-      - EXIT_GW=192.168.1.2          # exit-node forwarded traffic (required)
-      # - IFACE=eth0                 # Auto-detected; set explicitly if needed
-      # - IFACE_EXIT=eth1            # Defaults to IFACE if omitted
-      # - LOCAL_REDIR_PORT=12345     # Optional local transparent proxy port
+      # === Split-Gateway Routing (override in Dokploy UI) ===
+      # Gateway for tailscaled own traffic (STUN/Control/DERP). Leave empty to keep host default.
+      - DIRECT_GW=${DIRECT_GW:-}
 
-      # === Native containerboot Env Vars ===
+      # Gateway for exit-node forwarded traffic (required).
+      - EXIT_GW=${EXIT_GW}
+
+      # Network interface. Auto-detected if omitted.
+      - IFACE=${IFACE:-}
+
+      # Interface for exit-node gateway. Defaults to IFACE.
+      - IFACE_EXIT=${IFACE_EXIT:-${IFACE:-}}
+
+      # Optional local transparent proxy port (e.g., 12345).
+      - LOCAL_REDIR_PORT=${LOCAL_REDIR_PORT:-}
+
+      # === Tailscale containerboot Settings ===
       - TS_AUTHKEY=${TS_AUTHKEY}
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_EXTRA_ARGS=--advertise-exit-node --netfilter-mode=off --accept-dns=false
+      - TS_STATE_DIR=${TS_STATE_DIR:-/var/lib/tailscale}
+      - TS_EXTRA_ARGS=${TS_EXTRA_ARGS:---advertise-exit-node --netfilter-mode=off --accept-dns=false}
 
 volumes:
   tailscale-state:
