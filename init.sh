@@ -55,6 +55,9 @@ fi
 iptables -t mangle -A PREROUTING -i tailscale0 -j MARK --set-mark 0x1
 log "iptables: marked tailscale0 ingress with fwmark 0x1"
 
+iptables -t nat -A POSTROUTING -o "$IFACE_EXIT" -m mark --mark 0x1 -j MASQUERADE
+log "iptables: MASQUERADE exit-node traffic on $IFACE_EXIT"
+
 if [ -n "$LOCAL_REDIR_PORT" ]; then
     iptables -t nat -A PREROUTING -i tailscale0 -p tcp -j REDIRECT --to-ports "$LOCAL_REDIR_PORT"
     iptables -t nat -A PREROUTING -i tailscale0 -p udp -j REDIRECT --to-ports "$LOCAL_REDIR_PORT"
