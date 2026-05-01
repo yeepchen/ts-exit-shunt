@@ -4,11 +4,11 @@ set -e
 log() { echo "[ts-init] $*"; }
 
 # ========== Environment Variables ==========
-DIRECT_GW="${DIRECT_GW:-}"          # Default gateway for tailscaled own traffic (keep existing if unset)
-EXIT_GW="${EXIT_GW:-}"              # Gateway for exit-node forwarded traffic (required)
-IFACE="${IFACE:-}"                  # Auto-detected if omitted; can be set explicitly
-IFACE_EXIT="${IFACE_EXIT:-$IFACE}"  # Interface for exit-node gateway (defaults to IFACE)
-LOCAL_REDIR_PORT="${LOCAL_REDIR_PORT:-}"  # Optional local transparent proxy port
+DIRECT_GW="${DIRECT_GW:-}"
+EXIT_GW="${EXIT_GW:-}"
+IFACE="${IFACE:-}"
+IFACE_EXIT="${IFACE_EXIT:-$IFACE}"
+LOCAL_REDIR_PORT="${LOCAL_REDIR_PORT:-}"
 
 # ========== Validation ==========
 [ -z "$EXIT_GW" ] && { log "ERROR: EXIT_GW is required"; exit 1; }
@@ -23,12 +23,8 @@ detect_iface() {
 log "Using interface: $IFACE (exit: $IFACE_EXIT)"
 
 # ========== Idempotent Cleanup ==========
-while ip rule del fwmark 0x1 lookup exitnode 2>/dev/null; do :; done
-ip route flush table exitnode 2>/dev/null || true
-
-if ! grep -q "^100 exitnode" /etc/iproute2/rt_tables 2>/dev/null; then
-    echo "100 exitnode" >> /etc/iproute2/rt_tables
-fi
+while ip rule del fwmark 0x1 lookup 100 2>/dev/null; do :; done
+ip route flush table 100 2>/dev/null || true
 
 for cmd in iptables; do
     [ -x "$(command -v $cmd)" ] || continue
@@ -46,9 +42,9 @@ for cmd in iptables; do
 done
 
 # ========== Policy Routing ==========
-ip rule add fwmark 0x1 lookup exitnode
-ip route add default via "$EXIT_GW" dev "$IFACE_EXIT" table exitnode
-log "Route: table exitnode default via $EXIT_GW dev $IFACE_EXIT"
+ip rule add fwmark 0x1 lookup 100
+ip route add default via "$EXIT_GW" dev "$IFACE_EXIT" table 100
+log "Route: table 100 default via $EXIT_GW dev $IFACE_EXIT"
 
 if [ -n "$DIRECT_GW" ]; then
     ip route replace default via "$DIRECT_GW" dev "$IFACE"
@@ -74,4 +70,4 @@ if [ -x /usr/local/bin/containerboot ]; then
 else
     log "ERROR: /usr/local/bin/containerboot not found"
     exit 1
-fii
+fi
